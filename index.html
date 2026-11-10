@@ -6,6 +6,42 @@
   <meta name="theme-color" content="#000000">
   <title>TOM SAINT — SAINT_OS // EXTREME</title>
   <link rel="stylesheet" href="style.css">
+
+  <!-- Goth<3throb typed intro (sits over the shrine on the home screen) -->
+  <style>
+    #typedIntro {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: flex;
+      align-items: center;          /* vertical centre */
+      justify-content: center;      /* horizontal centre */
+      padding: 80px 24px;
+      box-sizing: border-box;
+      pointer-events: none;         /* shrine stays interactive underneath */
+    }
+    #typedIntro pre {
+      margin: 0;
+      width: min(34rem, 100%);      /* centred block, text left-aligned inside */
+      text-align: left;
+      white-space: pre-wrap;
+      font: 400 11px/1.8 "IBM Plex Mono", "Courier New", monospace;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--fg, #f3f3f3);
+      text-shadow: 0 0 6px rgba(0,0,0,.9), 0 0 2px rgba(0,0,0,1);
+    }
+    #typedIntro .ti-cursor {
+      display: inline-block;
+      width: .6em;
+      height: 1.1em;
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      background: var(--red, #c70d0d);
+      animation: tiBlink .8s steps(1) infinite;
+    }
+    @keyframes tiBlink { 50% { opacity: 0; } }
+  </style>
 </head>
 
 <body>
@@ -79,7 +115,12 @@
       no oracle.
       The rotating Three.js shrine is the hero.
     -->
-    <section id="home" class="screen realm shrine-home" data-scene="home"></section>
+    <section id="home" class="screen realm shrine-home" data-scene="home">
+      <!-- Typed intro: types out after [ ENTER ], then stays -->
+      <div id="typedIntro" aria-label="Intro">
+        <pre><span id="typedIntroText"></span><span class="ti-cursor" aria-hidden="true"></span></pre>
+      </div>
+    </section>
 
 
 
@@ -319,6 +360,68 @@
       "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"
     }
   }
+  </script>
+
+  <!-- Goth<3throb typed intro script -->
+  <script>
+  (function () {
+    var message =
+      "The year was 2020.  The world fell silent.\n" +
+      "Streets emptied and stages went dark.\n" +
+      "Humanity retreated indoors…\n" +
+      "\n" +
+      "But in the wreckage, something was being built.\n" +
+      "A sonic hybrid of hardcore, hip hop and rave\n" +
+      "from London's hybrid sonic underground.\n" +
+      "A new sound.\n" +
+      "\n" +
+      "They tried to shut it down.\n" +
+      "They tried to lock it away.\n" +
+      "But it had already been sent forward…\n" +
+      "Its designation:\n" +
+      "Goth<3throb\n" +
+      "\n" +
+      "Scroll now.";
+
+    var out = document.getElementById("typedIntroText");
+    var started = false;
+    if (!out) return;
+
+    function start() {
+      if (started) return;
+      started = true;
+
+      // Visitors who've turned off animations get the text straight away.
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        out.textContent = message;
+        return;
+      }
+
+      var i = 0;
+      (function typeNext() {
+        if (i >= message.length) return;        // finished: text stays
+        var ch = message.charAt(i++);
+        out.textContent += ch;
+
+        // Hacker rhythm: uneven keystrokes, pauses at line ends.
+        var delay = 25 + Math.random() * 55;
+        if (ch === "\n") delay = 350;
+        if (ch === "…") delay = 700;
+        if (ch === "." || ch === ":") delay += 200;
+        setTimeout(typeNext, delay);
+      })();
+    }
+
+    // Begin once the visitor clicks [ ENTER ] and the intro has faded out.
+    var enterBtn = document.getElementById("enterBtn");
+    if (enterBtn) {
+      enterBtn.addEventListener("click", function () {
+        setTimeout(start, 1400);
+      }, { once: true });
+    } else {
+      start();
+    }
+  })();
   </script>
 
   <script type="module" src="script.js"></script>
