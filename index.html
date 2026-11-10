@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>TOM SAINT — SAINT_OS // EXTREME</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <!-- Three.js / WebGL layer -->
+  <div id="webgl"></div>
+
+  <!-- Cursor / visual FX -->
+  <canvas id="trail"></canvas>
+  <div class="fx noise"></div>
+  <div class="fx scanlines"></div>
+  <div class="fx chroma"></div>
+  <div class="fx vignette"></div>
+
+  <!-- Boot screen -->
+  <section id="boot" class="screen boot">
+    <div class="boot-shell">
+      <div class="boot-title">SAINT_OS // 6.6.6</div>
+      <div id="bootLog" class="boot-log"></div>
+      <div class="boot-status">DO NOT CLOSE THE WINDOW</div>
+    </div>
+  </section>
+
+  <!-- Intro / Enter Church screen -->
+  <section id="intro" class="screen intro hidden">
+    <video id="heroVideo" autoplay muted loop playsinline poster="assets/hero-poster.jpg">
+      <source src="assets/hero-loop.mp4" type="video/mp4">
+    </video>
+
+    <div class="intro-fog"></div>
+    <div class="flash-layer" id="flashLayer"></div>
+
+    <div class="hero-center">
+      <div class="eyebrow">TRANSMISSION DETECTED</div>
+      <img class="hero-logo" src="assets/2024LOGO0WHITE.png"alt="Tom Saint"/>
+      <div class="hero-sub">gothheartthrob</div>
+      <button id="enterBtn">[ ENTER ]</button>
+    </div>
+
+    <div class="hud-corner tl">SAINT_OS // ONLINE</div>
+    <div class="hud-corner tr" id="clock">00:00:00</div>
+    <div class="hud-corner bl">CLICK + HOLD // SCROLL // MOVE</div>
+    <div class="hud-corner br">BUILD_X</div>
+  </section>
+
+  <!-- Main website -->
+  <main id="site" class="hidden">
+
+
+  
+
+    <!-- KEEP: top navigation bar -->
+    <header class="topbar">
+      <a href="#home" class="logo">TOM SAINT</a>
+
+      <nav>
+        <a href="#music">MUSIC</a>
+        <a href="#video">VIDEO</a>
+        <a href="#live">LIVE</a>
+        <a href="#confess">CONFESS</a>
+      </nav>
+
+      <button id="muteBtn" class="tiny" style="display:none;">AUDIO: OFF</button>
+    </header>
+
+    <!--
+      SHRINE HOMEPAGE
+      Deliberately empty:
+      no TOM SAINT title,
+      no MARTYRDOM title,
+      no instruction,
+      no oracle.
+      The rotating Three.js shrine is the hero.
+    -->
+    <section id="home" class="screen realm shrine-home" data-scene="home"></section>
+
+
+
+
+  <iframe
+  src="stem-player.html"
+  width="100%"
+  height="720"
+  frameborder="0"
+  scrolling="no"
+  allow="autoplay"
+  style="
+    border: none;
+    max-width: 1040px;
+    width: 100%;
+    height: 720px;
+    margin: 0 auto;
+    display: block;
+    overflow: hidden;
+  "
+></iframe>
+
+    <!-- Music -->
+    <section id="music" class="section">
+      <div class="section-title">
+        <div>01 // AUDIO</div>
+        <h2>MUSIC</h2>
+        <small>APPROACH TRANSMISSIONS TO HEAR THEM</small>
+      </div>
+
+      <div class="tunnel" id="tunnel">
+
+  <article class="release" data-audio="assets/twenty-five-preview.mp3">
+   <a href="https://arsontheory.vyd.co/TomSaintBassline" target="_blank">
+    <div class="art cube-face">
+      
+      <img src="assets/bassline.jpg" alt="Bassline artwork">
+    </div>
+    <div class="release-copy">
+      <b>BASSLINE</b>
+      <span>TRANSMISSION_001</span>
+    </a>
+    </div>
+  </article>
+
+  <article class="release" data-audio="assets/sex-preview.mp3">
+      <a href="https://arsontheory.vyd.co/DiamondBezel" target="_blank">
+    <div class="art cube-face">
+   
+      <img src="assets/diamondbezel.jpg" alt="Diamond Bezel artwork">
+    </div>
+    <div class="release-copy">
+      <b>DIAMOND BEZEL</b>
+      <span>TRANSMISSION_002</span>
+      </a>
+    </div>
+  </article>
+
+  <article class="release" data-audio="assets/too-young-preview.mp3">
+     <a href="https://open.spotify.com/track/6ivNTSiFCtyjecm4nGHIjL?si=92c79b4d3f404922" target="_blank">
+    <div class="art cube-face">
+     
+      <img src="assets/fatalattraction.jpg" alt="Fatal Attraction artwork">
+    </div>
+    <div class="release-copy">
+      <b>FATAL ATTRACTION</b>
+      <span>TRANSMISSION_003</span>
+      </a>
+    </div>
+  </article>
+
+  <article class="release" data-audio="assets/too-young-preview.mp3">
+     <a href="https://open.spotify.com/track/2grrPOsTWO76lfotjYRg3S?si=e4903667657f43d0" target="_blank">
+    <div class="art cube-face">
+     
+      <img src="assets/shrinesong.jpg" alt="Shrine Song artwork">
+    </div>
+    <div class="release-copy">
+      <b>SHRINE SONG (TOM SAINT REMIX)</b>
+      <span>TRANSMISSION_004</span>
+      </a>
+    </div>
+  </article>
+
+</div>
+    </section>
+
+    <!-- Video -->
+    <section id="video" class="section">
+      <div class="section-title">
+        <div>02 // VISUAL</div>
+        <h2>VIDEO</h2>
+        <small>SURVEILLANCE ARCHIVE // HOVER TO ACTIVATE</small>
+      </div>
+
+      <div class="surveillance">
+        <A href="https://youtu.be/O2lzdsrgJ1w?si=xrodVfWKlhTI9wxm" target="_blank">    
+        <article class="monitor" data-video="assets/film-1.mp4">
+          <div class="monitor-screen">
+               
+            <video muted loop playsinline></video>
+            <div class="monitor-overlay"></div>
+          </div>
+          <div class="monitor-meta">
+            <span>CAM_01</span>
+            <b>BASSLINE</b>
+            <i>NO SIGNAL</i>
+          </div>
+        </article>
+
+        <A href="https://www.youtube.com/watch?v=FEVT5XSpIxI" target="_blank">
+        <article class="monitor" data-video="assets/film-2.mp4">
+          <div class="monitor-screen">
+            
+            <video muted loop playsinline></video>
+            <div class="monitor-overlay"></div>
+          </div>
+          <div class="monitor-meta">
+            <span>CAM_02</span>
+            <b>DIAMOND BEZEL</b>
+            <i>NO SIGNAL</i>
+          </div>
+        </article>
+
+        <A href="https://www.youtube.com/watch?v=K3fxjzf5xRo" target="_blank">
+        <article class="monitor" data-video="assets/film-3.mp4">
+          <div class="monitor-screen">
+            <video muted loop playsinline></video>
+            <div class="monitor-overlay"></div>
+          </div>
+          <div class="monitor-meta">
+            <span>CAM_03</span>
+            <b>FATAL ATTRACTION</b>
+            <i>NO SIGNAL</i>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Live -->
+    <section id="live" class="section live-section">
+      <div class="section-title">
+        <div>03 // LIVE</div>
+        <h2>LIVE</h2>
+        <small>COORDINATES LOCKED</small>
+      </div>
+
+      <div class="radar">
+        <div class="radar-circle"></div>
+        <div class="radar-line"></div>
+
+        <div class="radar-copy">
+          <span>LONDON</span>
+          <b>TRANSMISSION PENDING</b>
+          <small>VENUE LOCKED // SIGNAL UNKNOWN</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- Archive -->
+    <section id="archive" class="section hidden">
+      <div class="section-title">
+        <div>04 // MEMORY</div>
+        <h2>ARCHIVE</h2>
+        <small>UNSORTED // UNSTABLE // UNVERIFIED</small>
+      </div>
+
+      <div id="archiveField" class="archive-field">
+        <div class="scrap photo x1">POLAROID_001</div>
+        <div class="scrap note x2">"BAD BOYS IN THE BACK SEAT..."</div>
+        <div class="scrap photo x3">STUDIO_DEL_SAINT</div>
+        <div class="scrap note x4">BORN TO BLEED ON MY OWN</div>
+        <div class="scrap photo x5">CONTACT_SHEET_07</div>
+        <div class="scrap note x6">1:07AM // VOCAL TAKE 14</div>
+        <div class="scrap note x7">CHURCH OF SIN // MEMBERS ONLY</div>
+
+        <button id="privateUnlock" class="private-lock">[ LOCKED FILE ]</button>
+      </div>
+    </section>
+
+    <!-- Confess -->
+    <section id="confess" class="screen confess-screen">
+      <div class="terminal">
+        <div class="terminal-bar">CONFESS.EXE // SECURE SESSION</div>
+
+        <div class="terminal-body">
+          <p>&gt; CONNECTION ESTABLISHED</p>
+          <p>&gt; IDENTITY: UNKNOWN</p>
+          <p>&gt; THIS SESSION WILL NOT BE SAVED*</p>
+          <p>&gt; CONFESS YOUR SIN</p>
+
+          <form id="confessForm">
+            <label>&gt;</label>
+            <input id="confession" autocomplete="off" maxlength="180">
+          </form>
+
+          <div id="verdict" class="verdict"></div>
+          <small>* probably</small>
+        </div>
+      </div>
+    </section>
+
+    <!-- Private -->
+    <section id="private" class="private-section hidden">
+      <div class="private-inner">
+        <div class="private-label">PRIVATE ACCESS GRANTED</div>
+        <h2>YOU STAYED TOO LONG.</h2>
+        <p>Drop unreleased demos, hidden videos, lyrics, invites or secret downloads here.</p>
+      </div>
+    </section>
+
+    <footer>
+      <span>TOM SAINT // SAINT_OS</span>
+      <span>ALL SIGNALS TERMINATE HERE.</span>
+    </footer>
+  </main>
+
+  <!-- Interaction FX -->
+  <div id="holdFx" class="holdfx">
+    <span>HOLD TO SIN</span>
+  </div>
+
+  <div id="burst" class="burst"></div>
+
+  <!-- Audio -->
+  <audio id="ambient" src="assets/ambient.mp3" loop preload="auto"></audio>
+  <audio id="preview" preload="auto"></audio>
+
+  <!-- Three.js module map -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <script type="module" src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+Replace the placeholder media paths listed in README.md with your real Tom Saint assets.
