@@ -4,7 +4,29 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#000000">
-  <title>TOM SAINT — SAINT_OS // EXTREME</title>
+  <title>TOM SAINT — GOTH&lt;3THROB</title>
+  <meta name="description" content="Tom Saint — Goth&lt;3throb. A hybrid of hardcore, hip hop and rave from London's sonic underground.">
+
+  <!-- Tab + home-screen icons -->
+  <link rel="icon" href="assets/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+
+  <!-- Link previews (iMessage, WhatsApp, Instagram, X, Facebook) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Tom Saint">
+  <meta property="og:url" content="https://gothheartthrob.com/">
+  <meta property="og:title" content="TOM SAINT — GOTH&lt;3THROB">
+  <meta property="og:description" content="A hybrid of hardcore, hip hop and rave from London's sonic underground.">
+  <meta property="og:image" content="https://gothheartthrob.com/assets/share-image.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Tom Saint logo over a dark portrait">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="TOM SAINT — GOTH&lt;3THROB">
+  <meta name="twitter:description" content="A hybrid of hardcore, hip hop and rave from London's sonic underground.">
+  <meta name="twitter:image" content="https://gothheartthrob.com/assets/share-image.jpg">
+  <link rel="canonical" href="https://gothheartthrob.com/">
   <link rel="stylesheet" href="style.css">
 
   <!-- Goth<3throb typed intro (sits over the shrine on the home screen) -->
@@ -333,12 +355,81 @@
       <div class="private-inner">
         <div class="private-label">PRIVATE ACCESS GRANTED</div>
         <h2>YOU STAYED TOO LONG.</h2>
-        <p>Drop unreleased demos, hidden videos, lyrics, invites or secret downloads here.</p>
+        <p>THE FILE IS STILL BEING WRITTEN. RETURN WHEN THE SIGNAL DOES.</p>
       </div>
     </section>
 
+    <!-- Channels: socials + contact -->
+    <div id="channels" class="channels">
+      <div class="channels-inner">
+        <!-- Mailing list (Kit form 10176229). Kit's script handles
+             sending, errors and the "check your email" message. -->
+        <div class="signal-signup">
+          <div class="channels-label">&gt; RECEIVE TRANSMISSIONS</div>
+          <p class="signal-copy">New releases, gigs and secret drops. Straight to your inbox.</p>
+
+          <form action="https://app.kit.com/forms/10176229/subscriptions"
+                class="seva-form formkit-form signal-form"
+                method="post"
+                data-sv-form="10176229"
+                data-uid="c130d5cdf3"
+                data-format="inline"
+                data-version="5"
+                data-options='{"settings":{"after_subscribe":{"action":"message","success_message":"SIGNAL RECEIVED. CHECK YOUR INBOX TO CONFIRM.","redirect_url":""},"powered_by":{"show":true,"url":"https://kit.com/features/forms"},"recaptcha":{"enabled":false},"return_visitor":{"action":"show","custom_content":""}},"version":"5"}'>
+
+            <ul class="formkit-alert formkit-alert-error" data-element="errors" data-group="alert"></ul>
+
+            <div data-element="fields" class="seva-fields formkit-fields signal-fields">
+              <label class="signal-prompt" for="signalEmail">&gt;</label>
+              <input id="signalEmail" class="formkit-input" name="email_address" aria-label="Email address" placeholder="YOUR EMAIL" required type="email" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send">
+              <button data-element="submit" class="formkit-submit signal-submit">
+                <div class="formkit-spinner"><div></div><div></div><div></div></div>
+                <span>SUBSCRIBE</span>
+              </button>
+            </div>
+
+            <div class="signal-small">
+              <span>WE RESPECT YOUR PRIVACY. UNSUBSCRIBE AT ANY TIME.</span>
+              <a href="https://kit.com/features/forms" data-element="powered-by" class="formkit-powered-by-convertkit" target="_blank" rel="nofollow noopener">BUILT WITH KIT</a>
+            </div>
+          </form>
+        </div>
+
+        <script src="https://f.convertkit.com/ckjs/ck.5.js" async></script>
+
+        <div class="channels-label">&gt; OPEN CHANNELS</div>
+
+        <nav class="channels-list" aria-label="Tom Saint on other platforms">
+          <a href="https://www.instagram.com/tomsaintxo/" target="_blank" rel="noopener"><span>01</span>INSTAGRAM</a>
+          <a href="https://www.tiktok.com/@tomsaintxo" target="_blank" rel="noopener"><span>02</span>TIKTOK</a>
+          <a href="https://www.youtube.com/@tomsaintxo" target="_blank" rel="noopener"><span>03</span>YOUTUBE</a>
+          <a href="https://open.spotify.com/artist/6tatWnZ4nH8Cpivd2uXKJn" target="_blank" rel="noopener"><span>04</span>SPOTIFY</a>
+          <a href="https://music.apple.com/us/artist/tom-saint/1512234493" target="_blank" rel="noopener"><span>05</span>APPLE MUSIC</a>
+          <a href="https://tomsaint.bandcamp.com/" target="_blank" rel="noopener"><span>06</span>BANDCAMP</a>
+          <a href="https://soundcloud.com/tomsaintxo" target="_blank" rel="noopener"><span>07</span>SOUNDCLOUD</a>
+          <a href="https://x.com/tomsaintxo" target="_blank" rel="noopener"><span>08</span>X</a>
+        </nav>
+
+        <div class="channels-contact">
+          <span>BOOKING / PRESS //</span>
+          <a id="contactEmail" href="#channels" data-user="tomsaintmusic" data-domain="gmail.com">[ ENABLE JAVASCRIPT ]</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Email is assembled here so spam robots can't read it from the page -->
+    <script>
+    (function () {
+      var a = document.getElementById("contactEmail");
+      if (!a) return;
+      var addr = a.dataset.user + "@" + a.dataset.domain;
+      a.href = "mailto:" + addr;
+      a.textContent = addr.toUpperCase();
+    })();
+    </script>
+
     <footer>
-      <span>TOM SAINT // SAINT_OS</span>
+      <span>© 2026 TOM SAINT // SAINT_OS</span>
       <span>ALL SIGNALS TERMINATE HERE.</span>
     </footer>
   </main>

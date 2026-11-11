@@ -727,3 +727,73 @@ html.touch .release.active .art{
   }
   .release-copy b{font-size:9px;letter-spacing:1.5px}
 }
+
+
+/* =========================================
+   CHANNELS (socials + contact)
+========================================= */
+.channels{position:relative;z-index:2;border-top:1px solid #222;padding:70px 22px 60px;background:var(--bg)}
+.channels-inner{max-width:1100px;margin:0 auto}
+.channels-label{font:500 10px "IBM Plex Mono",monospace;letter-spacing:.2em;color:#6f6f6f;margin-bottom:26px}
+.channels-list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid #1d1d1d;border-left:1px solid #1d1d1d}
+.channels-list a{display:flex;align-items:baseline;gap:12px;padding:22px 18px;border-right:1px solid #1d1d1d;border-bottom:1px solid #1d1d1d;font:600 12px "IBM Plex Mono",monospace;letter-spacing:.16em;color:#cfcfcf;transition:background .15s,color .15s}
+.channels-list a span{font-size:9px;font-weight:500;color:#555;letter-spacing:.1em}
+.channels-list a:focus-visible{background:#f3f3f3;color:#020202;outline:none}
+.channels-list a:focus-visible span{color:var(--red)}
+.channels-list a:active{background:#f3f3f3;color:#020202}
+@media (hover:hover){
+  .channels-list a:hover{background:#f3f3f3;color:#020202}
+  .channels-list a:hover span{color:var(--red)}
+}
+.channels-contact{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:baseline;margin-top:34px;font:500 10px "IBM Plex Mono",monospace;letter-spacing:.18em;color:#6f6f6f}
+.channels-contact a{color:#f3f3f3;font-size:12px;border-bottom:1px solid #444;padding-bottom:3px;word-break:break-all}
+.channels-contact a:hover{border-color:var(--red);color:#fff}
+@media (max-width:800px){
+  .channels{padding:56px 18px 48px}
+  .channels-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .channels-list a{padding:18px 14px;font-size:11px;letter-spacing:.12em}
+}
+
+
+/* =========================================
+   MAILING LIST (Kit)
+========================================= */
+.signal-signup{margin-bottom:64px;max-width:640px}
+.signal-signup .channels-label{margin-bottom:14px}
+.signal-copy{font:500 13px "IBM Plex Mono",monospace;letter-spacing:.08em;color:#bdbdbd;margin:0 0 22px;line-height:1.6}
+.signal-form{position:relative}
+.signal-fields{display:flex;align-items:center;gap:12px;border:1px solid #333;padding:6px 6px 6px 16px;background:rgba(0,0,0,.4);transition:border-color .2s}
+.signal-fields:focus-within{border-color:#8a8a8a}
+.signal-prompt{font:600 14px "IBM Plex Mono",monospace;color:var(--red)}
+.signal-form .formkit-input{flex:1;min-width:0;background:transparent;border:0;outline:none;color:#f3f3f3;font:500 14px "IBM Plex Mono",monospace;letter-spacing:.1em;padding:12px 0}
+.signal-form .formkit-input::placeholder{color:#555;letter-spacing:.14em}
+.signal-submit{position:relative;flex:none;border:1px solid #f3f3f3;background:#f3f3f3;color:#020202;font:700 11px "IBM Plex Mono",monospace;letter-spacing:.18em;padding:0;cursor:pointer;transition:background .15s,color .15s}
+.signal-submit>span{display:block;padding:13px 18px}
+.signal-submit:focus-visible,.signal-submit:active{background:var(--red);border-color:var(--red);color:#fff;outline:none}
+@media (hover:hover){.signal-submit:hover{background:var(--red);border-color:var(--red);color:#fff}}
+.signal-small{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;margin-top:12px;font:500 9px "IBM Plex Mono",monospace;letter-spacing:.14em;color:#555}
+.signal-small a{color:#555}
+.signal-small a:hover{color:#999}
+
+/* Kit's messages + loading dots */
+.signal-form .formkit-alert{list-style:none;margin:0 0 12px;padding:12px 14px;font:500 11px "IBM Plex Mono",monospace;letter-spacing:.12em;border:1px solid #333}
+.signal-form .formkit-alert:empty{display:none}
+.signal-form .formkit-alert-error{border-color:var(--red);color:#ff6b6b}
+.signal-form .formkit-alert-success{border-color:#3a3a3a;color:#f3f3f3;background:rgba(255,255,255,.04)}
+.signal-form .formkit-alert li{margin:0}
+.signal-form .formkit-spinner{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4px;opacity:0;pointer-events:none}
+.signal-form .formkit-spinner>div{width:6px;height:6px;background:currentColor;animation:signalDots 1s infinite steps(2)}
+.signal-form .formkit-spinner>div:nth-child(2){animation-delay:.15s}
+.signal-form .formkit-spinner>div:nth-child(3){animation-delay:.3s}
+.signal-form .formkit-submit[data-active] .formkit-spinner{opacity:1}
+.signal-form .formkit-submit[data-active] .formkit-spinner~span{opacity:0}
+@keyframes signalDots{50%{opacity:.2}}
+
+@media (max-width:800px){
+  .signal-signup{margin-bottom:48px}
+  .signal-fields{flex-wrap:wrap;padding:6px;gap:6px}
+  .signal-prompt{display:none}
+  /* 16px stops iPhone zooming in */
+  .signal-form .formkit-input{font-size:16px;letter-spacing:.04em;padding:12px 10px;flex-basis:100%}
+  .signal-submit{width:100%}
+}
