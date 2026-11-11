@@ -73,27 +73,7 @@
 
 
 
-  <!-- Audio Elements pointing directly to your assets/audio/ folder -->
-
-  <audio id="audio-0" src="assets/audio/drums.mp3" preload="auto" loop></audio>
-
-  <audio id="audio-1" src="assets/audio/bass.mp3" preload="auto" loop></audio>
-
-  <audio id="audio-2" src="assets/audio/guitar.mp3" preload="auto" loop></audio>
-
-  <audio id="audio-3" src="assets/audio/synth.mp3" preload="auto" loop></audio>
-
-  <audio id="audio-4" src="assets/audio/vox.mp3" preload="auto" loop></audio>
-
-
-
-  <!-- One-Shot Trigger Audio Elements -->
-
-  <audio id="sfx-airhorn" src="assets/audio/airhorn.wav" preload="auto"></audio>
-
-  <audio id="sfx-eagle" src="assets/audio/eagle.wav" preload="auto"></audio>
-
-  <audio id="sfx-tomsaint" src="assets/audio/tomsaint.wav" preload="auto"></audio>
+  <!-- Stems and one-shots are loaded by the script below (assets/audio/) -->
 
 
 
@@ -273,7 +253,7 @@
 
     <div class="px-6 py-2.5 bg-zinc-950 border-t border-zinc-800 flex items-center justify-between text-[11px] text-zinc-500">
 
-      <div><span class="text-red-500 font-bold">READY //</span> ASSETS FOLDER CONNECTED</div>
+      <div><span id="status-text" class="text-red-500 font-bold">STANDBY //</span> <span id="status-detail">ASSETS FOLDER CONNECTED</span></div>
 
       <div class="text-zinc-500 font-bold tracking-wider">SAINT_OS // STEM PLAYER</div>
 
@@ -344,16 +324,49 @@
     // iOS: play even when the ring/silent switch is on
     try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
 
-    const SFX_IDS = ["sfx-airhorn", "sfx-eagle", "sfx-tomsaint"];
+    /* =====================================================
+       PLAYBACK ENGINE
+       Every stem is loaded into memory and played inside
+       Web Audio, all locked to the same clock. Tape speed
+       changes the playback rate there, which works on
+       iPhone/Safari (changing an <audio> element's speed
+       while it runs through Web Audio cuts out on Safari).
+    ===================================================== */
+
+    const STEM_URLS = [
+      "assets/audio/drums.mp3",
+      "assets/audio/bass.mp3",
+      "assets/audio/guitar.mp3",
+      "assets/audio/synth.mp3",
+      "assets/audio/vox.mp3"
+    ];
+
+    const SFX_URLS = {
+      "sfx-airhorn": "assets/audio/airhorn.wav",
+      "sfx-eagle": "assets/audio/eagle.wav",
+      "sfx-tomsaint": "assets/audio/tomsaint.wav"
+    };
 
     let sfxGain = null;
+    let stemBuffers = [];
+    let sfxBuffers = {};
+    let loadPromise = null;
+    let duration = 0;
+    let sources = [];
+    let startCtxTime = 0;   // audioCtx time when the current sources started
+    let startOffset = 0;    // song position (seconds) at startCtxTime
+    let wantPlay = false;   // play was pressed while still loading
 
-    function initAudio() {
+    function setStatus(label, detail) {
+      const a = document.getElementById("status-text");
+      const b = document.getElementById("status-detail");
+      if (a) a.textContent = label + " //";
+      if (b && detail !== undefined) b.textContent = detail;
+    }
 
-      if (audioCtx) {
-        if (audioCtx.state === "suspended") audioCtx.resume();
-        return;
-      }
+    function buildGraph() {
+
+      if (audioCtx) return;
 
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -361,87 +374,38 @@
 
       masterGain.gain.setValueAtTime(masterMuted ? 0 : masterVol, audioCtx.currentTime);
 
-
-
       const splitter = audioCtx.createChannelSplitter(2);
 
       masterAnalyserL = audioCtx.createAnalyser();
-
       masterAnalyserR = audioCtx.createAnalyser();
-
       masterAnalyserL.fftSize = 64;
-
       masterAnalyserR.fftSize = 64;
 
-
-
       masterGain.connect(splitter);
-
       splitter.connect(masterAnalyserL, 0);
-
       splitter.connect(masterAnalyserR, 1);
-
       masterGain.connect(audioCtx.destination);
 
-
-
-      TRACKS.forEach((t, i) => {
-
-        const audioEl = document.getElementById(`audio-${i}`);
-
+      TRACKS.forEach(() => {
         const gain = audioCtx.createGain();
-
         const panner = audioCtx.createStereoPanner();
-
         const analyser = audioCtx.createAnalyser();
-
         analyser.fftSize = 64;
-
-
-
-        try {
-
-          const source = audioCtx.createMediaElementSource(audioEl);
-
-          source.connect(gain);
-
-        } catch(e) {}
-
-
-
         gain.connect(panner);
-
         panner.connect(analyser);
-
         analyser.connect(masterGain);
-
-
-
         trackGains.push(gain);
-
         trackPanners.push(panner);
-
         trackAnalysers.push(analyser);
-
       });
 
-      // One-shots go through Web Audio too: iPhones ignore an
-      // audio element's own volume setting, so set it here instead.
+      // One-shots at 50%, through the master fader
       sfxGain = audioCtx.createGain();
       sfxGain.gain.value = 0.5;
       sfxGain.connect(masterGain);
 
-      SFX_IDS.forEach(id => {
-        try {
-          audioCtx.createMediaElementSource(document.getElementById(id)).connect(sfxGain);
-        } catch (e) {}
-      });
-
       updateAudioNodes();
-
     }
-
-
 
     function updateAudioNodes() {
 
@@ -465,24 +429,187 @@
 
     }
 
-    // Apply true tape-style varispeed to all stems.
-    // Disabling pitch preservation makes pitch rise/fall with playback speed.
+    // Call from a click/tap: creates the audio graph and wakes it up
+    function initAudio() {
+      buildGraph();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+    }
+
+    function loadAll() {
+
+      if (loadPromise) return loadPromise;
+
+      buildGraph();
+
+      const total = STEM_URLS.length + Object.keys(SFX_URLS).length;
+      let done = 0;
+
+      setStatus("LOADING", "0%");
+
+      const get = url =>
+        fetch(url)
+          .then(r => { if (!r.ok) throw new Error(url + " " + r.status); return r.arrayBuffer(); })
+          .then(data => new Promise((ok, fail) => audioCtx.decodeAudioData(data, ok, fail)))
+          .then(buffer => {
+            done++;
+            setStatus("LOADING", Math.round(done / total * 100) + "%");
+            return buffer;
+          });
+
+      const sfxNames = Object.keys(SFX_URLS);
+
+      loadPromise = Promise.all([
+        Promise.all(STEM_URLS.map(get)),
+        Promise.all(sfxNames.map(n => get(SFX_URLS[n]).catch(() => null)))
+      ]).then(([stems, sfx]) => {
+
+        stemBuffers = stems;
+        sfxNames.forEach((n, i) => { sfxBuffers[n] = sfx[i]; });
+
+        duration = Math.max(...stems.map(b => b.duration));
+
+        document.getElementById("duration-display").textContent = formatTime(duration);
+        document.getElementById("scrub-slider").max = duration;
+
+        setStatus("READY", "ASSETS FOLDER CONNECTED");
+
+        if (wantPlay) { wantPlay = false; play(); }
+      });
+
+      loadPromise.catch(error => {
+        console.error("STEM LOAD ERROR:", error);
+        loadPromise = null;
+        wantPlay = false;
+        setStatus("ERROR", "COULD NOT LOAD STEMS");
+        setPlayUI();
+      });
+
+      return loadPromise;
+    }
+
+    // Current song position in seconds
+    function position() {
+      if (!isPlaying || !audioCtx) return startOffset;
+      let pos = startOffset + Math.max(0, audioCtx.currentTime - startCtxTime) * playbackSpeed;
+      if (duration) pos = isLooping ? pos % duration : Math.min(pos, duration);
+      return pos;
+    }
+
+    function stopSources() {
+      sources.forEach(src => {
+        src.onended = null;
+        try { src.stop(); } catch (e) {}
+        try { src.disconnect(); } catch (e) {}
+      });
+      sources = [];
+    }
+
+    function startSources(offset) {
+
+      stopSources();
+
+      const when = audioCtx.currentTime + 0.03;
+
+      sources = stemBuffers.map((buffer, i) => {
+        const src = audioCtx.createBufferSource();
+        src.buffer = buffer;
+        src.loop = isLooping;
+        src.playbackRate.value = playbackSpeed;
+        src.connect(trackGains[i]);
+        src.start(when, Math.max(0, Math.min(offset, buffer.duration - 0.01)));
+        return src;
+      });
+
+      startCtxTime = when;
+      startOffset = offset;
+
+      // Loop off: stop the transport when the song reaches the end
+      const lead = sources[0];
+      lead.onended = () => {
+        if (sources[0] !== lead || isLooping) return;
+        stopSources();
+        isPlaying = false;
+        startOffset = 0;
+        setPlayUI();
+      };
+    }
+
+    function setPlayUI() {
+
+      const loading = wantPlay;
+
+      document.getElementById("play-icon").textContent = isPlaying ? "⏸" : loading ? "…" : "▶";
+
+      document.getElementById("play-text").textContent = isPlaying ? "PAUSE" : loading ? "LOADING" : "START ALL";
+
+      document.getElementById("btn-play").className = isPlaying ?
+
+        "px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 border bg-red-600 text-white border-red-400 shadow-red-600/30 transition-all active:scale-95" :
+
+        "px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 border bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border-zinc-600 transition-all active:scale-95";
+    }
+
+    function play() {
+      if (!stemBuffers.length) return;
+      if (duration && startOffset >= duration) startOffset = 0;
+      startSources(startOffset);
+      isPlaying = true;
+      setPlayUI();
+    }
+
+    function pause() {
+      startOffset = position();
+      stopSources();
+      isPlaying = false;
+      setPlayUI();
+    }
+
+    function seek(t) {
+      startOffset = Math.max(0, Math.min(t, duration || t));
+      if (isPlaying) startSources(startOffset);
+    }
+
+    // True tape-style varispeed: pitch rises and falls with speed.
     function setTapeSpeed(speed) {
+
+      if (isPlaying && audioCtx) {
+        // keep the song position continuous across the change
+        startOffset = position();
+        startCtxTime = Math.max(audioCtx.currentTime, startCtxTime);
+      }
+
       playbackSpeed = Math.max(0.5, Math.min(1.5, speed));
 
-      TRACKS.forEach((_, i) => {
-        const audio = document.getElementById(`audio-${i}`);
-        audio.preservesPitch = false;
-        audio.mozPreservesPitch = false;
-        audio.webkitPreservesPitch = false;
-        audio.playbackRate = playbackSpeed;
+      sources.forEach(src => {
+        src.playbackRate.setValueAtTime(playbackSpeed, audioCtx.currentTime);
       });
     }
 
+    function setLoop(on) {
 
+      if (isPlaying) {
+        startOffset = position();
+        startCtxTime = Math.max(audioCtx.currentTime, startCtxTime);
+      }
 
-    // Start at normal speed with pitch preservation disabled.
-    setTapeSpeed(1.0);
+      isLooping = on;
+
+      sources.forEach(src => { src.loop = on; });
+
+      const btn = document.getElementById("btn-loop");
+      btn.textContent = on ? "LOOP: ON" : "LOOP: OFF";
+      btn.className = on ?
+        "px-2.5 py-1.5 rounded-lg border text-xs bg-emerald-500/20 text-emerald-400 border-emerald-500/40 transition-colors" :
+        "px-2.5 py-1.5 rounded-lg border text-xs bg-zinc-800/90 text-zinc-400 border-zinc-600 transition-colors";
+    }
+
+    // Desktop: load straight away. Phones: load on first touch of the
+    // player, so visitors who never use it don't download 30MB.
+    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      loadAll();
+    } else {
+      document.addEventListener("pointerdown", () => { initAudio(); loadAll(); }, { once: true });
+    }
 
     // Render Strips
 
@@ -648,31 +775,16 @@
 
       initAudio();
 
-      if (audioCtx.state === "suspended") audioCtx.resume();
+      if (!stemBuffers.length) {
+        // still loading: play as soon as it's ready (press again to cancel)
+        wantPlay = !wantPlay;
+        setPlayUI();
+        loadAll();
+        return;
+      }
 
-      isPlaying = !isPlaying;
-
-      document.getElementById("play-icon").textContent = isPlaying ? "⏸" : "▶";
-
-      document.getElementById("play-text").textContent = isPlaying ? "PAUSE" : "START ALL";
-
-      document.getElementById("btn-play").className = isPlaying ? 
-
-        "px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 border bg-red-600 text-white border-red-400 shadow-red-600/30 transition-all active:scale-95" :
-
-        "px-4 py-2 rounded-lg font-bold text-xs flex items-center gap-2 border bg-zinc-800 hover:bg-zinc-700 text-zinc-100 border-zinc-600 transition-all active:scale-95";
-
-
-
-      TRACKS.forEach((_, i) => {
-
-        const el = document.getElementById(`audio-${i}`);
-
-        if (isPlaying) el.play().catch(()=>{});
-
-        else el.pause();
-
-      });
+      if (isPlaying) pause();
+      else play();
 
     });
 
@@ -680,21 +792,11 @@
 
     document.getElementById("btn-stop").addEventListener("click", () => {
 
+      wantPlay = false;
+      stopSources();
       isPlaying = false;
-
-      document.getElementById("play-icon").textContent = "▶";
-
-      document.getElementById("play-text").textContent = "START ALL";
-
-      TRACKS.forEach((_, i) => {
-
-        const el = document.getElementById(`audio-${i}`);
-
-        el.pause();
-
-        el.currentTime = 0;
-
-      });
+      startOffset = 0;
+      setPlayUI();
 
     });
 
@@ -702,7 +804,15 @@
 
     document.getElementById("btn-rtz").addEventListener("click", () => {
 
-      TRACKS.forEach((_, i) => { document.getElementById(`audio-${i}`).currentTime = 0; });
+      seek(0);
+
+    });
+
+
+
+    document.getElementById("btn-loop").addEventListener("click", () => {
+
+      setLoop(!isLooping);
 
     });
 
@@ -972,22 +1082,18 @@
 
       initAudio();
 
-      const el = document.getElementById(id);
+      const fire = () => {
+        const buffer = sfxBuffers[id];
+        if (!buffer) return;
+        const src = audioCtx.createBufferSource();
+        src.buffer = buffer;
+        src.playbackRate.value = playbackSpeed;
+        src.connect(sfxGain);
+        src.start();
+      };
 
-      if (el) {
-
-        if (!sfxGain) el.volume = masterVol * 0.5;
-
-        el.currentTime = 0;
-
-        el.preservesPitch = false;
-        el.mozPreservesPitch = false;
-        el.webkitPreservesPitch = false;
-        el.playbackRate = playbackSpeed;
-
-        el.play().catch(()=>{});
-
-      }
+      if (sfxBuffers[id]) fire();
+      else loadAll().then(fire).catch(() => {});
 
     }
 
@@ -1041,23 +1147,17 @@
 
 
 
-    const leadAudio = document.getElementById("audio-0");
+    const scrubSlider = document.getElementById("scrub-slider");
 
-    leadAudio.addEventListener("loadedmetadata", () => {
+    let scrubbing = false;
 
-      document.getElementById("duration-display").textContent = formatTime(leadAudio.duration || 0);
+    scrubSlider.addEventListener("pointerdown", () => { scrubbing = true; });
+    window.addEventListener("pointerup", () => { scrubbing = false; });
+    window.addEventListener("pointercancel", () => { scrubbing = false; });
 
-      document.getElementById("scrub-slider").max = leadAudio.duration || 100;
+    scrubSlider.addEventListener("input", (e) => {
 
-    });
-
-
-
-    document.getElementById("scrub-slider").addEventListener("input", (e) => {
-
-      const t = parseFloat(e.target.value);
-
-      TRACKS.forEach((_, i) => { document.getElementById(`audio-${i}`).currentTime = t; });
+      seek(parseFloat(e.target.value));
 
     });
 
@@ -1065,11 +1165,13 @@
 
     function anim() {
 
-      if (leadAudio.duration) {
+      if (duration) {
 
-        document.getElementById("timecode-display").textContent = formatTime(leadAudio.currentTime);
+        const pos = position();
 
-        document.getElementById("scrub-slider").value = leadAudio.currentTime;
+        document.getElementById("timecode-display").textContent = formatTime(pos);
+
+        if (!scrubbing) scrubSlider.value = pos;
 
       }
 

@@ -594,7 +594,12 @@ function stopPreview() {
 
 }
 
+let previewClaimed = false;
+
 async function playRelease(card) {
+
+  previewClaimed = true;
+  preview.muted = false;
 
   releases.forEach(other => {
     other.classList.remove('active');
@@ -617,6 +622,44 @@ async function playRelease(card) {
   }
 
 }
+
+/* Safari (Mac and iPhone) only lets an audio element play on
+   hover once it has been started by a click or tap. So start it
+   silently when the visitor clicks [ ENTER ], then stop it. */
+enterBtn?.addEventListener(
+  'click',
+  () => {
+
+    if (!preview || !releases.length) return;
+
+    try {
+
+      preview.muted = true;
+      preview.src = releases[0].dataset.audio;
+
+      const unlock = preview.play();
+
+      if (unlock && unlock.then) {
+
+        unlock
+          .then(() => {
+            if (previewClaimed) return;
+            preview.pause();
+            preview.currentTime = 0;
+            preview.muted = false;
+          })
+          .catch(() => {
+            preview.muted = false;
+          });
+
+      }
+
+    } catch (error) {
+      preview.muted = false;
+    }
+
+  }
+);
 
 releases.forEach(card => {
 
