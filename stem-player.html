@@ -38,6 +38,33 @@
 
     }
 
+    /* Touch screens: dragging a fader/knob moves the control, not the page */
+    [id^="fader-track-"],
+    [id^="pan-knob-"],
+    #master-fader-track,
+    #speed-knob {
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    html, body { -webkit-tap-highlight-color: transparent; }
+
+    /* Keyboard-shortcut badges mean nothing on a phone */
+    @media (hover: none) {
+      .key-badge { display: none; }
+    }
+
+    /* Phones: 3 x 2 mixer instead of a sideways-scrolling strip */
+    @media (max-width: 639px) {
+      #mixer-strips {
+        min-width: 0;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+      #mixer-strips .min-h-\[220px\] { min-height: 180px; }
+    }
+
   </style>
 
 </head>
@@ -196,7 +223,7 @@
 
         <button id="trigger-airhorn" class="group relative px-4 py-3 rounded-xl bg-gradient-to-b from-red-600 via-red-700 to-red-900 border-2 border-red-400 shadow-[0_6px_16px_rgba(220,38,38,0.35)] active:scale-95 transition-all text-center">
 
-          <div class="absolute top-1.5 right-2 px-1.5 py-0.5 rounded bg-black/60 border border-red-400/40 text-[9px] text-red-200">KEY [1]</div>
+          <div class="key-badge absolute top-1.5 right-2 px-1.5 py-0.5 rounded bg-black/60 border border-red-400/40 text-[9px] text-red-200">KEY [1]</div>
 
           <span class="font-bold text-xs uppercase text-white">AIRHORN</span>
 
@@ -206,7 +233,7 @@
 
         <button id="trigger-eagle" class="group relative px-4 py-3 rounded-xl bg-gradient-to-b from-red-700 via-red-800 to-zinc-950 border-2 border-red-500 shadow-[0_6px_16px_rgba(185,28,28,0.35)] active:scale-95 transition-all text-center">
 
-          <div class="absolute top-1.5 right-2 px-1.5 py-0.5 rounded bg-black/60 border border-red-400/40 text-[9px] text-red-200">KEY [2]</div>
+          <div class="key-badge absolute top-1.5 right-2 px-1.5 py-0.5 rounded bg-black/60 border border-red-400/40 text-[9px] text-red-200">KEY [2]</div>
 
           <span class="font-bold text-xs uppercase text-white">EAGLE</span>
 
@@ -216,7 +243,7 @@
 
         <button id="trigger-tomsaint" class="group relative px-4 py-3 rounded-xl bg-gradient-to-b from-zinc-800 via-zinc-900 to-black border-2 border-red-500 shadow-[0_6px_16px_rgba(220,38,38,0.25)] active:scale-95 transition-all text-center">
 
-          <div class="absolute top-1.5 right-2 px-1.5 py-0.5 rounded bg-black/60 border border-red-400/40 text-[9px] text-red-200">KEY [3]</div>
+          <div class="key-badge absolute top-1.5 right-2 px-1.5 py-0.5 rounded bg-black/60 border border-red-400/40 text-[9px] text-red-200">KEY [3]</div>
 
           <span class="font-bold text-xs uppercase text-red-100">TOM SAINT</span>
 
@@ -314,9 +341,19 @@
 
 
 
+    // iOS: play even when the ring/silent switch is on
+    try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
+
+    const SFX_IDS = ["sfx-airhorn", "sfx-eagle", "sfx-tomsaint"];
+
+    let sfxGain = null;
+
     function initAudio() {
 
-      if (audioCtx) return;
+      if (audioCtx) {
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        return;
+      }
 
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -386,6 +423,18 @@
 
         trackAnalysers.push(analyser);
 
+      });
+
+      // One-shots go through Web Audio too: iPhones ignore an
+      // audio element's own volume setting, so set it here instead.
+      sfxGain = audioCtx.createGain();
+      sfxGain.gain.value = 0.5;
+      sfxGain.connect(masterGain);
+
+      SFX_IDS.forEach(id => {
+        try {
+          audioCtx.createMediaElementSource(document.getElementById(id)).connect(sfxGain);
+        } catch (e) {}
       });
 
       updateAudioNodes();
@@ -703,11 +752,15 @@
 
           trackEl.removeEventListener("pointerup", onUp);
 
+          trackEl.removeEventListener("pointercancel", onUp);
+
         };
 
         trackEl.addEventListener("pointermove", onMove);
 
         trackEl.addEventListener("pointerup", onUp);
+
+        trackEl.addEventListener("pointercancel", onUp);
 
       });
 
@@ -747,11 +800,15 @@
 
           panKnob.removeEventListener("pointerup", onUp);
 
+          panKnob.removeEventListener("pointercancel", onUp);
+
         };
 
         panKnob.addEventListener("pointermove", onMove);
 
         panKnob.addEventListener("pointerup", onUp);
+
+        panKnob.addEventListener("pointercancel", onUp);
 
       });
 
@@ -823,11 +880,15 @@
 
         mFaderTrack.removeEventListener("pointerup", onUp);
 
+          mFaderTrack.removeEventListener("pointercancel", onUp);
+
       };
 
       mFaderTrack.addEventListener("pointermove", onMove);
 
       mFaderTrack.addEventListener("pointerup", onUp);
+
+      mFaderTrack.addEventListener("pointercancel", onUp);
 
     });
 
@@ -879,11 +940,15 @@
 
         speedKnob.removeEventListener("pointerup", onUp);
 
+          speedKnob.removeEventListener("pointercancel", onUp);
+
       };
 
       speedKnob.addEventListener("pointermove", onMove);
 
       speedKnob.addEventListener("pointerup", onUp);
+
+      speedKnob.addEventListener("pointercancel", onUp);
 
     });
 
@@ -911,7 +976,7 @@
 
       if (el) {
 
-        el.volume = masterVol * 0.5;
+        if (!sfxGain) el.volume = masterVol * 0.5;
 
         el.currentTime = 0;
 

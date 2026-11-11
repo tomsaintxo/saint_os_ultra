@@ -628,3 +628,105 @@ label {
   opacity: 0.45;
   text-transform: uppercase;
 }
+/* Confession box placeholder */
+.terminal-body input{font:500 12px "IBM Plex Mono",monospace;letter-spacing:.12em;padding:4px 0}
+.terminal-body input::placeholder{color:#555;text-transform:uppercase;letter-spacing:.12em}
+
+/* =========================================
+   MOBILE + TOUCH (iPhone / iPad / Android)
+   html.touch is added by script.js on
+   devices without a mouse.
+========================================= */
+
+/* Hold-to-sin: tint the screen with an overlay instead of
+   filtering <body> (that made fixed elements jump on phones) */
+.holdfx.active{
+  -webkit-backdrop-filter:contrast(1.45) saturate(.25);
+  backdrop-filter:contrast(1.45) saturate(.25);
+}
+
+html.touch,
+html.touch body{
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* No text-selection / long-press menu while holding */
+html.touch body{
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
+}
+html.touch input,
+html.touch textarea{
+  -webkit-user-select:text;
+  user-select:text;
+}
+
+/* No cursor on touch screens */
+html.touch #trail,
+html.touch #cursorFlash{
+  display:none !important;
+}
+
+/* No hover on touch: show the artwork properly,
+   highlight the one that's playing */
+html.touch .release{
+  transform:none;
+  opacity:.9;
+}
+html.touch .release.active{
+  opacity:1;
+}
+html.touch .release.active .art{
+  outline:1px solid rgba(255,255,255,.7);
+  outline-offset:3px;
+}
+html.touch .release.active .release-copy b:after{
+  content:" ▶";
+  color:var(--red);
+}
+
+@media (max-width:800px){
+
+  /* Keep the menu on phones, just smaller */
+  .topbar{padding:14px}
+  .topbar nav{display:flex !important;gap:12px}
+  .topbar nav a{font-size:9px;letter-spacing:.08em;padding:6px 0}
+  .logo{font-size:14px;white-space:nowrap}
+
+  .section{min-height:auto;padding:96px 18px 80px}
+  .section-title{margin-bottom:36px;gap:12px}
+
+  .surveillance{gap:28px}
+  .monitor-meta{font-size:8px}
+
+  .radar{height:56vh;min-height:340px}
+  .radar-circle,
+  .radar-line{width:80vw;height:80vw}
+
+  .terminal{width:calc(100vw - 32px)}
+  .terminal-body{padding:20px 16px}
+
+  /* 16px stops iPhone zooming in when you tap the box */
+  .terminal-body input{font-size:16px;letter-spacing:.06em}
+
+  .verdict{font-size:clamp(34px,11vw,60px)}
+
+  .private-inner h2{font-size:clamp(44px,13vw,80px)}
+
+  #typedIntro pre{font-size:10px;letter-spacing:.08em}
+
+  .hud-corner{font-size:9px;letter-spacing:.14em}
+  .tl,.tr{top:16px}.bl,.br{bottom:16px}
+  .tl,.bl{left:14px}.tr,.br{right:14px}
+}
+
+/* Music: 2 x 2 grid on phones */
+@media (max-width:600px){
+  .tunnel{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:22px 12px;
+    padding:0;
+  }
+  .release-copy b{font-size:9px;letter-spacing:1.5px}
+}

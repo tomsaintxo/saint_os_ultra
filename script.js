@@ -1,6 +1,34 @@
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+/* =========================================================
+   DEVICE
+   Touch phones/tablets have no hover and no mouse cursor,
+   so a few interactions switch to tap / scroll versions.
+========================================================= */
+
+const isTouch =
+  window.matchMedia('(hover: none)').matches ||
+  window.matchMedia('(pointer: coarse)').matches;
+
+if (isTouch) {
+  document.documentElement.classList.add('touch');
+}
+
+/* iOS: let Web Audio play even when the ring/silent switch is on */
+try {
+  if (navigator.audioSession) {
+    navigator.audioSession.type = 'playback';
+  }
+} catch (error) {}
+
+/* Last input type used (mouse / touch / pen) */
+let lastPointerType = 'mouse';
+
+window.addEventListener(
+  'pointerdown',
+  event => {
+    lastPointerType = event.pointerType || 'mouse';
+  },
+  { capture: true }
+);
 
 
 /* =========================================================
@@ -418,7 +446,46 @@ window.addEventListener(
 
 /* =========================================================
    HOLD TO SIN
+   Works with mouse and touch. On touch, moving your finger
+   (scrolling) cancels it, so it only fires on a still press.
 ========================================================= */
+
+let holdActive = false;
+let holdShader = 0;
+let holdStart = null;
+
+function startHoldFx() {
+
+  holdActive = true;
+  holdShader = 1;
+
+  holdFx?.classList.add('active');
+
+  burst?.classList.remove('hit');
+
+  if (burst) {
+    void burst.offsetWidth;
+    burst.classList.add('hit');
+  }
+
+  if (navigator.vibrate) {
+    navigator.vibrate(80);
+  }
+
+}
+
+function endHold() {
+
+  holding = false;
+  holdActive = false;
+  holdShader = 0;
+  holdStart = null;
+
+  clearTimeout(holdTimer);
+
+  holdFx?.classList.remove('active');
+
+}
 
 window.addEventListener(
   'pointerdown',
@@ -426,224 +493,313 @@ window.addEventListener(
 
     if (
       event.target.closest(
-        'a,button,input'
+        'a,button,input,iframe,.release,.monitor'
       )
     ) {
       return;
     }
 
-
     holding = true;
 
+    holdStart = {
+      x: event.clientX,
+      y: event.clientY
+    };
+
+    /* Mouse: shader distortion starts straight away (as before) */
+    if (event.pointerType === 'mouse') {
+      holdShader = 1;
+    }
+
+    clearTimeout(holdTimer);
 
     holdTimer =
       setTimeout(() => {
 
         if (!holding) return;
 
-        holdFx?.classList.add(
-          'active'
-        );
+        startHoldFx();
 
-
-        document.body.style.filter =
-          'contrast(1.45) saturate(.25)';
-
-
-        burst?.classList.remove(
-          'hit'
-        );
-
-
-        if (burst) {
-
-          void burst.offsetWidth;
-
-          burst.classList.add(
-            'hit'
-          );
-
-        }
-
-
-        if (
-          navigator.vibrate
-        ) {
-
-          navigator.vibrate(80);
-
-        }
-
-      }, 350);
+      }, event.pointerType === 'mouse' ? 350 : 450);
 
   }
 );
 
-
 window.addEventListener(
-  'pointerup',
+  'pointermove',
+  event => {
+
+    if (
+      !holding ||
+      !holdStart ||
+      event.pointerType === 'mouse'
+    ) {
+      return;
+    }
+
+    const moved =
+      Math.hypot(
+        event.clientX - holdStart.x,
+        event.clientY - holdStart.y
+      );
+
+    /* Finger is scrolling, not holding */
+    if (moved > 12) {
+      endHold();
+    }
+
+  }
+);
+
+window.addEventListener('pointerup', endHold);
+window.addEventListener('pointercancel', endHold);
+window.addEventListener('blur', endHold);
+
+document.addEventListener(
+  'visibilitychange',
   () => {
+    if (document.hidden) endHold();
+  }
+);
 
-    holding = false;
-
-    clearTimeout(
-      holdTimer
-    );
-
-    holdFx?.classList.remove(
-      'active'
-    );
-
-    document.body.style.filter =
-      '';
-
+/* Stop iOS showing its long-press menu while holding */
+window.addEventListener(
+  'contextmenu',
+  event => {
+    if (
+      isTouch &&
+      !event.target.closest('input,textarea')
+    ) {
+      event.preventDefault();
+    }
   }
 );
 
 
 /* =========================================================
    MUSIC PREVIEWS
+   Mouse: hover to hear, click to open the link.
+   Touch: first tap plays the preview, second tap opens the link.
 ========================================================= */
 
-$$('.release')
-  .forEach(card => {
+const releases = $$('.release');
 
-    card.addEventListener(
-      'mouseenter',
-      async () => {
+function stopPreview() {
 
-        $$('.release')
-          .forEach(other => {
+  preview.pause();
 
-            other.classList.remove(
-              'active'
-            );
+  try {
+    preview.currentTime = 0;
+  } catch (error) {}
 
-          });
+}
 
+async function playRelease(card) {
 
-        card.classList.add(
-          'active'
-        );
-
-
-        if (!audioOn) {
-          return;
-        }
-
-
-        preview.src =
-          card.dataset.audio;
-
-
-        preview.volume = .52;
-
-
-        try {
-
-          await preview.play();
-
-        } catch (error) {
-
-          console.warn(
-            'Preview:',
-            error
-          );
-
-        }
-
-      }
-    );
-
-
-    card.addEventListener(
-      'mouseleave',
-      () => {
-
-        preview.pause();
-
-        preview.currentTime = 0;
-
-        card.classList.remove(
-          'active'
-        );
-
-      }
-    );
-
+  releases.forEach(other => {
+    other.classList.remove('active');
   });
+
+  card.classList.add('active');
+
+  if (!audioOn) {
+    return;
+  }
+
+  preview.src = card.dataset.audio;
+
+  preview.volume = .52;
+
+  try {
+    await preview.play();
+  } catch (error) {
+    console.warn('Preview:', error);
+  }
+
+}
+
+releases.forEach(card => {
+
+  card.addEventListener(
+    'pointerenter',
+    event => {
+      if (event.pointerType !== 'mouse') return;
+      playRelease(card);
+    }
+  );
+
+  card.addEventListener(
+    'pointerleave',
+    event => {
+      if (event.pointerType !== 'mouse') return;
+      stopPreview();
+      card.classList.remove('active');
+    }
+  );
+
+  card.addEventListener(
+    'click',
+    event => {
+
+      if (lastPointerType === 'mouse') {
+        return;
+      }
+
+      /* Second tap on the playing release: follow the link */
+      if (card.classList.contains('active')) {
+        return;
+      }
+
+      event.preventDefault();
+
+      playRelease(card);
+
+    }
+  );
+
+});
+
+/* Touch: stop the preview when tapping elsewhere */
+document.addEventListener(
+  'click',
+  event => {
+
+    if (lastPointerType === 'mouse') return;
+
+    if (event.target.closest('.release')) return;
+
+    if (!releases.some(card => card.classList.contains('active'))) return;
+
+    stopPreview();
+
+    releases.forEach(card => {
+      card.classList.remove('active');
+    });
+
+  }
+);
 
 
 /* =========================================================
    FILMS
+   Mouse: hover to play.
+   Touch: each film plays (muted) while it is on screen.
 ========================================================= */
 
-$$('.monitor')
-  .forEach(monitor => {
+const monitors = $$('.monitor');
 
-    const video =
-      monitor.querySelector(
-        'video'
-      );
+function setMonitor(monitor, live) {
 
+  const video = monitor.querySelector('video');
+  const status = monitor.querySelector('i');
 
-    if (!video) return;
+  if (!video) return;
 
+  if (live) {
 
-    video.src =
-      monitor.dataset.video;
+    if (!video.src) {
+      video.src = monitor.dataset.video;
+    }
 
+    if (status) status.textContent = 'LIVE';
 
-    monitor.addEventListener(
-      'mouseenter',
-      () => {
+    video.play().catch(() => {});
 
-        const status =
-          monitor.querySelector(
-            'i'
-          );
+  } else {
 
+    if (status) status.textContent = 'NO SIGNAL';
 
-        if (status) {
-          status.textContent =
-            'LIVE';
-        }
+    video.pause();
 
-
-        video
-          .play()
-          .catch(() => {});
-
-      }
-    );
-
-
-    monitor.addEventListener(
-      'mouseleave',
-      () => {
-
-        const status =
-          monitor.querySelector(
-            'i'
-          );
-
-
-        if (status) {
-
-          status.textContent =
-            'NO SIGNAL';
-
-        }
-
-
-        video.pause();
-
+    if (!isTouch) {
+      try {
         video.currentTime = 0;
+      } catch (error) {}
+    }
 
-      }
+  }
+
+}
+
+monitors.forEach(monitor => {
+
+  const video = monitor.querySelector('video');
+
+  if (!video) return;
+
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = isTouch ? 'none' : 'auto';
+
+  if (!isTouch) {
+    video.src = monitor.dataset.video;
+  }
+
+  monitor.addEventListener(
+    'pointerenter',
+    event => {
+      if (event.pointerType !== 'mouse') return;
+      setMonitor(monitor, true);
+    }
+  );
+
+  monitor.addEventListener(
+    'pointerleave',
+    event => {
+      if (event.pointerType !== 'mouse') return;
+      setMonitor(monitor, false);
+    }
+  );
+
+});
+
+if (isTouch && 'IntersectionObserver' in window) {
+
+  const filmObserver =
+    new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          setMonitor(
+            entry.target,
+            entry.isIntersecting
+          );
+        });
+      },
+      { threshold: .6 }
     );
 
+  monitors.forEach(monitor => {
+    filmObserver.observe(monitor);
   });
+
+}
+
+/* Touch-friendly instruction text */
+if (isTouch) {
+
+  const videoHint = $('#video .section-title small');
+
+  if (videoHint) {
+    videoHint.textContent =
+      'SURVEILLANCE ARCHIVE // SCROLL TO ACTIVATE';
+  }
+
+  const musicHint = $('#music .section-title small');
+
+  if (musicHint) {
+    musicHint.textContent =
+      'TAP TO HEAR // TAP AGAIN TO OPEN';
+  }
+
+  const hudHint = $('.hud-corner.bl');
+
+  if (hudHint) {
+    hudHint.textContent =
+      'TAP + HOLD // SCROLL';
+  }
+
+}
+
 
 
 /* =========================================================
@@ -963,12 +1119,16 @@ function resizeTrail() {
 
 }
 
-window.addEventListener(
-  'resize',
-  resizeTrail
-);
+if (!isTouch) {
 
-resizeTrail();
+  window.addEventListener(
+    'resize',
+    resizeTrail
+  );
+
+  resizeTrail();
+
+}
 
 
 window.addEventListener(
@@ -1111,148 +1271,150 @@ function drawTrail() {
 }
 
 
-drawTrail();
-
-  trailCtx.clearRect(
-    0,
-    0,
-    innerWidth,
-    innerHeight
-  );
+/* No cursor on touch screens, so skip the trail there */
+if (!isTouch) {
+  drawTrail();
+}
 
 
-  /* ---------------------------------
-     OLD TRAILING PARTICLES
-  --------------------------------- */
+/* =========================================================
+   AUDIO ANALYSER
+========================================================= */
 
-  trail =
-    trail.slice(-22);
-
-
-  trail.forEach(
-    (point, index) => {
-
-      point.alpha *= .87;
+let analyser = null;
+let analyserData = null;
+let audioContext = null;
+let sourceNode = null;
 
 
-      trailCtx.beginPath();
+async function initAnalyser() {
+
+  if (analyser) {
+    return;
+  }
 
 
-      trailCtx.arc(
-        point.x,
-        point.y,
-        Math.max(
-          .35,
-          index / 12
-        ),
-        0,
-        Math.PI * 2
+  try {
+
+    audioContext =
+      new (
+        window.AudioContext ||
+        window.webkitAudioContext
+      )();
+
+
+    sourceNode =
+      audioContext
+        .createMediaElementSource(
+          ambient
+        );
+
+
+    analyser =
+      audioContext
+        .createAnalyser();
+
+
+    analyser.fftSize =
+      256;
+
+
+    analyserData =
+      new Uint8Array(
+        analyser
+          .frequencyBinCount
       );
 
 
-      trailCtx.fillStyle =
-        `rgba(
-          255,
-          255,
-          255,
-          ${
-            point.alpha *
-            (
-              index /
-              trail.length
-            ) *
-            .12
-          }
-        )`;
+    sourceNode.connect(
+      analyser
+    );
 
 
-      trailCtx.fill();
-
-    }
-  );
-
-
-  /* ---------------------------------
-     FLASH DIRECTLY UNDER CURSOR
-  --------------------------------- */
-
-  const pulse =
-    (
-      Math.sin(
-        performance.now() *
-        .018
-      ) +
-      1
-    ) / 2;
+    analyser.connect(
+      audioContext.destination
+    );
 
 
-  const radius =
-    .7 +
-    pulse * 1.3;
+  } catch (error) {
+
+    console.error(
+      'AUDIO ANALYSER ERROR:',
+      error
+    );
+
+  }
+
+}
 
 
-  /* soft outer flash */
-
-  trailCtx.beginPath();
-
-  trailCtx.arc(
-    mouse.x,
-    mouse.y,
-    radius * 3,
-    0,
-    Math.PI * 2
-  );
-
-  trailCtx.fillStyle =
-    `rgba(
-      255,
-      255,
-      255,
-      ${
-        .025 +
-        pulse * .07
-      }
-    )`;
-
-  trailCtx.fill();
+enterBtn?.addEventListener(
+  'click',
+  initAnalyser,
+  {
+    once: true
+  }
+);
 
 
-  /* tiny bright pixel underneath arrow tip */
+function getAmplitude() {
 
-  trailCtx.beginPath();
-
-  trailCtx.arc(
-    mouse.x,
-    mouse.y,
-    radius,
-    0,
-    Math.PI * 2
-  );
-
-  trailCtx.fillStyle =
-    `rgba(
-      255,
-      255,
-      255,
-      ${
-        .3 +
-        pulse * .7
-      }
-    )`;
-
-  trailCtx.fill();
+  if (
+    !analyser ||
+    !analyserData
+  ) {
+    return 0;
+  }
 
 
-  requestAnimationFrame(
-    drawTrail
-  );
+  analyser
+    .getByteFrequencyData(
+      analyserData
+    );
 
 
+  let total = 0;
+
+
+  for (
+    let i = 0;
+    i < 40;
+    i++
+  ) {
+
+    total +=
+      analyserData[i];
+
+  }
+
+
+  return (
+    total / 40
+  ) / 255;
+
+}
 
 
 /* =========================================================
    THREE.JS SCENE
+   Loaded separately so the rest of the site still works if
+   the 3D library can't load (older iPhones, bad signal).
 ========================================================= */
+
+async function initScene() {
+
+const THREE =
+  await import('three');
+
+const { GLTFLoader } =
+  await import('three/addons/loaders/GLTFLoader.js');
+
+const { RoomEnvironment } =
+  await import('three/addons/environments/RoomEnvironment.js');
+
+/* Phones: lighter rendering so it stays smooth */
+const maxPixelRatio =
+  isTouch ? 1.5 : 2;
 
 const host =
   $('#webgl');
@@ -1318,7 +1480,7 @@ renderer.toneMappingExposure =
 renderer.setPixelRatio(
   Math.min(
     devicePixelRatio,
-    2
+    maxPixelRatio
   )
 );
 
@@ -1611,9 +1773,17 @@ shrineLoader.load(
       you had visually working before.
     */
 
-    shrine.userData.baseScale =
+    shrine.userData.desktopScale =
       calculatedScale *
       .90;
+
+    shrine.userData.sizeW =
+      Math.max(size.x, size.z);
+
+    shrine.userData.sizeH =
+      size.y;
+
+    fitShrine();
 
 
     shrine.scale.setScalar(
@@ -1687,7 +1857,7 @@ const particleGeometry =
 
 
 const particleCount =
-  7000;
+  isTouch ? 3500 : 7000;
 
 
 const particlePositions =
@@ -1783,7 +1953,7 @@ scene.add(
 const pixelRatio =
   Math.min(
     devicePixelRatio,
-    2
+    maxPixelRatio
   );
 
 
@@ -2206,41 +2376,63 @@ postScene.add(
 );
 
 
+
 /* =========================================================
-   CURRENT SECTION / CORRUPTION STATE
+   KEEP THE SHRINE INSIDE THE SCREEN
+   On a tall phone screen the shrine is scaled down so it
+   isn't cropped at the sides. Desktop size is unchanged.
 ========================================================= */
 
-let ultraHold = 0;
+function fitShrine() {
+
+  if (
+    !shrine ||
+    !shrine.userData.desktopScale
+  ) {
+    return;
+  }
+
+  const visibleHeight =
+    2 *
+    camera.position.z *
+    Math.tan(
+      THREE.MathUtils.degToRad(
+        camera.fov / 2
+      )
+    );
+
+  const visibleWidth =
+    visibleHeight *
+    camera.aspect;
+
+  const fitWidth =
+    visibleWidth * .85 /
+    shrine.userData.sizeW;
+
+  const fitHeight =
+    visibleHeight * .8 /
+    shrine.userData.sizeH;
+
+  shrine.userData.baseScale =
+    Math.min(
+      shrine.userData.desktopScale,
+      fitWidth,
+      fitHeight
+    );
+
+  shrine.scale.setScalar(
+    shrine.userData.baseScale
+  );
+
+}
+
+
+/* =========================================================
+   CURRENT SECTION
+========================================================= */
+
 let ultraDecay = 0;
 let ultraScene = 0;
-
-
-window.addEventListener(
-  'pointerdown',
-  event => {
-
-    if (
-      !event.target.closest(
-        'a,button,input'
-      )
-    ) {
-
-      ultraHold = 1;
-
-    }
-
-  }
-);
-
-
-window.addEventListener(
-  'pointerup',
-  () => {
-
-    ultraHold = 0;
-
-  }
-);
 
 
 const trackedSections =
@@ -2316,125 +2508,6 @@ trackedSections.forEach(
   }
 );
 
-
-/* =========================================================
-   AUDIO ANALYSER
-========================================================= */
-
-let analyser = null;
-let analyserData = null;
-let audioContext = null;
-let sourceNode = null;
-
-
-async function initAnalyser() {
-
-  if (analyser) {
-    return;
-  }
-
-
-  try {
-
-    audioContext =
-      new (
-        window.AudioContext ||
-        window.webkitAudioContext
-      )();
-
-
-    sourceNode =
-      audioContext
-        .createMediaElementSource(
-          ambient
-        );
-
-
-    analyser =
-      audioContext
-        .createAnalyser();
-
-
-    analyser.fftSize =
-      256;
-
-
-    analyserData =
-      new Uint8Array(
-        analyser
-          .frequencyBinCount
-      );
-
-
-    sourceNode.connect(
-      analyser
-    );
-
-
-    analyser.connect(
-      audioContext.destination
-    );
-
-
-  } catch (error) {
-
-    console.error(
-      'AUDIO ANALYSER ERROR:',
-      error
-    );
-
-  }
-
-}
-
-
-enterBtn?.addEventListener(
-  'click',
-  initAnalyser,
-  {
-    once: true
-  }
-);
-
-
-function getAmplitude() {
-
-  if (
-    !analyser ||
-    !analyserData
-  ) {
-    return 0;
-  }
-
-
-  analyser
-    .getByteFrequencyData(
-      analyserData
-    );
-
-
-  let total = 0;
-
-
-  for (
-    let i = 0;
-    i < 40;
-    i++
-  ) {
-
-    total +=
-      analyserData[i];
-
-  }
-
-
-  return (
-    total / 40
-  ) / 255;
-
-}
-
-
 /* =========================================================
    ANIMATION
 ========================================================= */
@@ -2478,7 +2551,7 @@ function animate() {
 
 
   postUniforms.uHold.value =
-    ultraHold;
+    holdShader;
 
 
   postUniforms.uDecay.value =
@@ -2733,51 +2806,80 @@ function animate() {
 
 animate();
 
-
 /* =========================================================
    RESIZE
+   iPhone Safari fires "resize" every time the address bar
+   slides in or out while scrolling. Rebuilding the 3D canvas
+   each time causes flicker, so small height-only changes
+   are ignored (the canvas simply stretches slightly).
 ========================================================= */
+
+let lastWidth = innerWidth;
+let lastHeight = innerHeight;
+let resizeTimer = null;
+
+function applyResize() {
+
+  const widthChanged =
+    innerWidth !== lastWidth;
+
+  const heightChange =
+    Math.abs(
+      innerHeight - lastHeight
+    );
+
+  if (
+    !widthChanged &&
+    heightChange < 160
+  ) {
+    return;
+  }
+
+  lastWidth = innerWidth;
+  lastHeight = innerHeight;
+
+  camera.aspect =
+    innerWidth /
+    innerHeight;
+
+  camera
+    .updateProjectionMatrix();
+
+  renderer.setSize(
+    innerWidth,
+    innerHeight
+  );
+
+  const ratio =
+    Math.min(
+      devicePixelRatio,
+      maxPixelRatio
+    );
+
+  renderTarget.setSize(
+    innerWidth * ratio,
+    innerHeight * ratio
+  );
+
+  fitShrine();
+
+}
 
 window.addEventListener(
   'resize',
   () => {
-
-    camera.aspect =
-      innerWidth /
-      innerHeight;
-
-
-    camera
-      .updateProjectionMatrix();
-
-
-    renderer.setSize(
-      innerWidth,
-      innerHeight
-    );
-
-
-    const ratio =
-      Math.min(
-        devicePixelRatio,
-        2
-      );
-
-
-    renderTarget.setSize(
-
-      innerWidth *
-      ratio,
-
-      innerHeight *
-      ratio
-
-    );
-
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(applyResize, 150);
   }
-  
-
-  
 );
 
+}
 
+
+initScene()
+  .catch(error => {
+    console.error(
+      'SAINT_OS // 3D SCENE UNAVAILABLE:',
+      error
+    );
+  });
