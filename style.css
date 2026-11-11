@@ -844,3 +844,15 @@ html.touch .release-cta{color:#cfcfcf}
 .channels-contact .press-link:hover{color:var(--red)}
 footer a{color:#8a8a8a}
 footer a:hover{color:var(--fg)}
+
+
+/* Hero video: never show the iPhone play button over the intro */
+#heroVideo::-webkit-media-controls,
+#heroVideo::-webkit-media-controls-start-playback-button,
+#heroVideo::-webkit-media-controls-overlay-play-button,
+#heroVideo::-webkit-media-controls-panel{
+  display:none !important;
+  -webkit-appearance:none;
+  opacity:0 !important;
+}
+#heroVideo{pointer-events:none;background:#000 url("assets/hero-poster.jpg") center/cover no-repeat}

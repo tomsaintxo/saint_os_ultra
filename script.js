@@ -132,7 +132,63 @@ const bootLines = [
   boot?.classList.add('hidden');
   intro?.classList.remove('hidden');
 
+  startHeroVideo();
+
   cinematicGlitch();
+
+})();
+
+
+/* =========================================================
+   HERO VIDEO
+   iPhones won't always autoplay a video that started out
+   hidden (behind the boot screen), and Low Power Mode blocks
+   autoplay entirely. So: phones get a light 720p version,
+   it's started as soon as the intro appears, and retried on
+   the first touch. If it still can't play, the still image
+   (poster) shows; the iPhone play button is hidden in CSS.
+========================================================= */
+
+function startHeroVideo() {
+
+  const video = $('#heroVideo');
+
+  if (!video) return;
+
+  video.muted = true;
+  video.defaultMuted = true;
+  video.playsInline = true;
+  video.setAttribute('muted', '');
+  video.setAttribute('playsinline', '');
+
+  const attempt = () => {
+    const playing = video.play();
+    if (playing && playing.catch) playing.catch(() => {});
+  };
+
+  attempt();
+
+  const retry = () => {
+    if (video.paused) attempt();
+  };
+
+  ['touchstart', 'pointerdown', 'click'].forEach(type => {
+    document.addEventListener(type, retry, { once: true, passive: true, capture: true });
+  });
+
+}
+
+/* Phones: swap to the lighter video before it starts loading much */
+(() => {
+
+  const video = $('#heroVideo');
+
+  if (!video) return;
+
+  if (isTouch || innerWidth <= 800) {
+    video.src = 'assets/hero-loop-mobile.mp4';
+    video.load();
+  }
 
 })();
 
