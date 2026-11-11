@@ -672,7 +672,7 @@ html.touch #cursorFlash{
    highlight the one that's playing */
 html.touch .release{
   transform:none;
-  opacity:.9;
+  opacity:1;
 }
 html.touch .release.active{
   opacity:1;
@@ -681,10 +681,7 @@ html.touch .release.active .art{
   outline:1px solid rgba(255,255,255,.7);
   outline-offset:3px;
 }
-html.touch .release.active .release-copy b:after{
-  content:" ▶";
-  color:var(--red);
-}
+
 
 @media (max-width:800px){
 

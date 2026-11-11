@@ -579,7 +579,7 @@ window.addEventListener(
 /* =========================================================
    MUSIC PREVIEWS
    Mouse: hover to hear, click to open the link.
-   Touch: first tap plays the preview, second tap opens the link.
+   Touch: no previews, a tap just opens the link.
 ========================================================= */
 
 const releases = $$('.release');
@@ -630,7 +630,7 @@ enterBtn?.addEventListener(
   'click',
   () => {
 
-    if (!preview || !releases.length) return;
+    if (isTouch || !preview || !releases.length) return;
 
     try {
 
@@ -666,7 +666,7 @@ releases.forEach(card => {
   card.addEventListener(
     'pointerenter',
     event => {
-      if (event.pointerType !== 'mouse') return;
+      if (isTouch || event.pointerType !== 'mouse') return;
       playRelease(card);
     }
   );
@@ -680,47 +680,8 @@ releases.forEach(card => {
     }
   );
 
-  card.addEventListener(
-    'click',
-    event => {
-
-      if (lastPointerType === 'mouse') {
-        return;
-      }
-
-      /* Second tap on the playing release: follow the link */
-      if (card.classList.contains('active')) {
-        return;
-      }
-
-      event.preventDefault();
-
-      playRelease(card);
-
-    }
-  );
-
 });
 
-/* Touch: stop the preview when tapping elsewhere */
-document.addEventListener(
-  'click',
-  event => {
-
-    if (lastPointerType === 'mouse') return;
-
-    if (event.target.closest('.release')) return;
-
-    if (!releases.some(card => card.classList.contains('active'))) return;
-
-    stopPreview();
-
-    releases.forEach(card => {
-      card.classList.remove('active');
-    });
-
-  }
-);
 
 
 /* =========================================================
@@ -771,11 +732,26 @@ monitors.forEach(monitor => {
   if (!video) return;
 
   video.muted = true;
+  video.defaultMuted = true;
   video.playsInline = true;
-  video.preload = isTouch ? 'none' : 'auto';
+  video.setAttribute('muted', '');
+  video.setAttribute('playsinline', '');
 
-  if (!isTouch) {
+  if (isTouch) {
+
+    /* A still frame so phones always show a picture,
+       even when the iPhone won't autoplay (Low Power Mode) */
+    if (monitor.dataset.poster) {
+      video.poster = monitor.dataset.poster;
+    }
+
+    video.preload = 'metadata';
+
+  } else {
+
+    video.preload = 'auto';
     video.src = monitor.dataset.video;
+
   }
 
   monitor.addEventListener(
@@ -796,19 +772,72 @@ monitors.forEach(monitor => {
 
 });
 
+/* iPhone: start each film once (silently) during the [ ENTER ] tap,
+   which allows it to autoplay later while scrolling */
+if (isTouch) {
+
+  enterBtn?.addEventListener(
+    'click',
+    () => {
+
+      monitors.forEach(monitor => {
+
+        const video = monitor.querySelector('video');
+
+        if (!video) return;
+
+        if (!video.src) {
+          video.src = monitor.dataset.video;
+        }
+
+        const unlock = video.play();
+
+        if (unlock && unlock.then) {
+          unlock
+            .then(() => {
+              if (!monitor.dataset.onscreen) video.pause();
+            })
+            .catch(() => {});
+        }
+
+      });
+
+    }
+  );
+
+  /* Any later tap also retries films that are on screen */
+  document.addEventListener(
+    'touchend',
+    () => {
+      monitors.forEach(monitor => {
+        if (!monitor.dataset.onscreen) return;
+        const video = monitor.querySelector('video');
+        if (video && video.paused) setMonitor(monitor, true);
+      });
+    },
+    { passive: true }
+  );
+
+}
+
 if (isTouch && 'IntersectionObserver' in window) {
 
   const filmObserver =
     new IntersectionObserver(
       entries => {
         entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.dataset.onscreen = '1';
+          } else {
+            delete entry.target.dataset.onscreen;
+          }
           setMonitor(
             entry.target,
             entry.isIntersecting
           );
         });
       },
-      { threshold: .6 }
+      { threshold: .5 }
     );
 
   monitors.forEach(monitor => {
@@ -831,7 +860,7 @@ if (isTouch) {
 
   if (musicHint) {
     musicHint.textContent =
-      'TAP TO HEAR // TAP AGAIN TO OPEN';
+      'TAP A TRANSMISSION TO LISTEN';
   }
 
   const hudHint = $('.hud-corner.bl');
