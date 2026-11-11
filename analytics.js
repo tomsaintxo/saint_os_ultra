@@ -40,6 +40,10 @@
       return send('social/' + slug(platform), 'Social: ' + platform);
     }
 
+    if ((a = t.closest('a[href="press.html"]'))) {
+      return send('press-kit', 'Opened press kit');
+    }
+
     if ((a = t.closest('#contactEmail'))) {
       return send('booking-email', 'Booking / press email');
     }

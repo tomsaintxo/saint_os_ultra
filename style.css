@@ -837,3 +837,10 @@ html.touch .release.active .art{
 .release-copy .release-cta{display:block;margin-top:2px;font:600 7px "IBM Plex Mono",monospace;font-style:normal;letter-spacing:1.8px;color:#8a8a8a;transition:color .15s}
 @media (hover:hover){.release:hover .release-cta,.release.active .release-cta{color:var(--red)}}
 html.touch .release-cta{color:#cfcfcf}
+
+
+/* Press kit link */
+.channels-contact .press-link{border-bottom:0;font-size:10px;letter-spacing:.18em;color:#cfcfcf}
+.channels-contact .press-link:hover{color:var(--red)}
+footer a{color:#8a8a8a}
+footer a:hover{color:var(--fg)}
