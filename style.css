@@ -829,3 +829,11 @@ html.touch .release.active .art{
   .gig-place{grid-area:place}.gig-venue{grid-area:venue;white-space:normal}
   .gig-head,.gig-foot{padding:12px 14px}
 }
+
+
+/* =========================================
+   RELEASES: "LISTEN EVERYWHERE" line
+========================================= */
+.release-copy .release-cta{display:block;margin-top:2px;font:600 7px "IBM Plex Mono",monospace;font-style:normal;letter-spacing:1.8px;color:#8a8a8a;transition:color .15s}
+@media (hover:hover){.release:hover .release-cta,.release.active .release-cta{color:var(--red)}}
+html.touch .release-cta{color:#cfcfcf}
