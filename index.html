@@ -300,9 +300,28 @@
         <div class="radar-line"></div>
 
         <div class="radar-copy">
-          <span>LONDON</span>
-          <b>TRANSMISSION PENDING</b>
-          <small>VENUE LOCKED // SIGNAL UNKNOWN</small>
+          <span id="liveCity">LONDON</span>
+          <b id="liveHeadline">TRANSMISSION PENDING</b>
+          <small id="liveDetail">VENUE LOCKED // SIGNAL UNKNOWN</small>
+        </div>
+      </div>
+
+      <!-- Upcoming shows: filled in from Bandsintown by gigs.js -->
+      <div id="gigs" class="gigs is-empty"
+           data-artist="id_15674764"
+           data-app="cd28b58f69e3cdecaa17cd1fc6976bb2"
+           data-profile="https://www.bandsintown.com/a/15674764">
+
+        <div class="gig-head">
+          <span>&gt; SIGNAL LOG</span>
+          <span id="gigStatus">SCANNING FOR SIGNALS…</span>
+        </div>
+
+        <ol id="gigList" class="gig-list"></ol>
+
+        <div class="gig-foot">
+          <a href="https://www.bandsintown.com/a/15674764" target="_blank" rel="noopener">[ TRACK ON BANDSINTOWN ]</a>
+          <span>GET ALERTED WHEN A SIGNAL APPEARS NEAR YOU</span>
         </div>
       </div>
     </section>
@@ -546,6 +565,7 @@
   })();
   </script>
 
+  <script src="gigs.js" defer></script>
   <script type="module" src="script.js"></script>
 </body>
 </html>

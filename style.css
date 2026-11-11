@@ -797,3 +797,35 @@ html.touch .release.active .art{
   .signal-form .formkit-input{font-size:16px;letter-spacing:.04em;padding:12px 10px;flex-basis:100%}
   .signal-submit{width:100%}
 }
+
+
+/* =========================================
+   LIVE DATES (Bandsintown, via gigs.js)
+========================================= */
+.gigs{margin-top:28px;border:1px solid var(--line);font-family:"IBM Plex Mono",monospace}
+.gig-head,.gig-foot{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;padding:14px 18px;font-size:9px;font-weight:500;letter-spacing:.16em;color:#666}
+.gig-head{border-bottom:1px solid #1d1d1d}
+.gig-head #gigStatus{color:#8a8a8a}
+.gig-list{list-style:none;margin:0;padding:0}
+.gig{display:grid;grid-template-columns:110px minmax(0,1.1fr) minmax(0,1.4fr) auto;align-items:center;gap:18px;padding:18px;border-bottom:1px solid #1d1d1d;font-size:12px;letter-spacing:.14em;color:#cfcfcf}
+.gig-date{color:#f3f3f3;font-weight:600}
+.gig-place{color:#f3f3f3}
+.gig-venue{color:#777;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gig-cta{font-weight:700;font-size:11px;letter-spacing:.18em;color:#f3f3f3;padding:8px 0;white-space:nowrap}
+.gig-cta.is-soldout{color:#555;text-decoration:line-through}
+.gig-foot{border-top:1px solid #1d1d1d;margin-top:-1px}
+.gig-foot a{color:#cfcfcf;font-weight:600}
+.gigs.is-empty .gig-list{display:none}
+.gigs.is-empty .gig-head{border-bottom:0}
+@media (hover:hover){
+  .gig:hover{background:rgba(255,255,255,.03)}
+  .gig-cta:not(.is-soldout):hover,.gig-foot a:hover{color:var(--red)}
+}
+.gig-cta:active,.gig-foot a:active{color:var(--red)}
+.radar-copy #liveHeadline{text-transform:uppercase}
+@media (max-width:800px){
+  .gig{grid-template-columns:auto 1fr;grid-template-areas:"date cta" "place place" "venue venue";gap:6px 12px;padding:16px 14px;font-size:11px}
+  .gig-date{grid-area:date}.gig-cta{grid-area:cta;justify-self:end}
+  .gig-place{grid-area:place}.gig-venue{grid-area:venue;white-space:normal}
+  .gig-head,.gig-foot{padding:12px 14px}
+}
